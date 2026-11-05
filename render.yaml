@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: campus-market
+    env: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    publishPath: dist
+    envVars:
+      - key: VITE_SUPABASE_URL
+        value: https://phqvccvdrhzipysndbgc.supabase.co
+      - key: VITE_SUPABASE_ANON_KEY
+        sync: false
