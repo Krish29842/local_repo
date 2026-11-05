@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+@theme {
+  --color-sand-1: #eabe75;
+  --color-sand-2: #f5d197;
+  --color-sand-3: #fbe3bc;
+  --color-sand-4: #fff0d9;
+  --color-sand-5: #fffaf3;
+
+  --color-ink: #1f3a4d;
+  --color-soft: #5f6f78;
+
+  --color-sea: #13727c;
+  --color-sea-hover: #0e565e;
+  --color-sea-light: #a4f4ff;
+
+  --color-coral: #d9684f;
+  --color-coral-hover: #bd553e;
+  --color-coral-light: #fc8368;
+
+  --font-sans: "Hanken Grotesk", system-ui, sans-serif;
+  --font-hand: "Kalam", "Comic Sans MS", cursive;
+  --font-caveat: "Caveat", cursive;
+
+  --shadow-paper: 0 2px 8px -2px rgba(31, 58, 77, 0.08), 0 1px 3px 0 rgba(31, 58, 77, 0.04);
+  --shadow-paperLift: 0 8px 18px -4px rgba(31, 58, 77, 0.12), 0 3px 6px -2px rgba(31, 58, 77, 0.06);
+}
+
+.bg-notebook-ruled {
+  background-color: #fffdf9;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent,
+    transparent 27px,
+    rgba(235, 215, 185, 0.45) 28px
+  );
+}
+
+.washi-tape {
+  background: rgba(245, 209, 151, 0.7);
+  box-shadow: 0 1px 3px rgba(31, 58, 77, 0.08);
+  transform: rotate(-2deg);
+}
+
+.sticky-tilt {
+  transform: rotate(-1.2deg);
+  transition: transform 0.2s ease-in-out;
+}
+.sticky-tilt:hover {
+  transform: rotate(0deg) scale(1.01);
+}
+
+:focus-visible {
+  outline: 3px solid #13727c;
+  outline-offset: 3px;
+}
