@@ -13,6 +13,7 @@ export default function Auth({ onClose }) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [resetCooldown, setResetCooldown] = useState(0); // seconds remaining
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,21 +24,45 @@ export default function Auth({ onClose }) {
       if (mode === 'login') {
         const { error: err } = await signIn(email, password);
         if (err) {
-          // Friendly message for unconfirmed email
-          if (err.message?.includes('not confirmed') || err.message?.includes('Email not confirmed')) {
-            setError('Please confirm your email first. Check your inbox for the confirmation link.');
+          if (
+            err.message?.includes('not confirmed') ||
+            err.message?.includes('Email not confirmed')
+          ) {
+            setError(
+              'Please confirm your email first. Check your inbox for the confirmation link.'
+            );
           } else {
             setError(err.message);
           }
         }
       } else if (mode === 'forgot') {
         const { error: err } = await resetPassword(email);
-        if (err) setError(err.message);
-        else setSuccess('Password reset link sent to your email.');
+        if (err) {
+          if (err.message?.includes('45 seconds') || err.message?.includes('only request')) {
+            setError('Please wait 45 seconds before requesting another reset link.');
+          } else {
+            setError(err.message);
+          }
+        } else {
+          setSuccess('Password reset link sent to your email.');
+          setResetCooldown(45);
+          const timer = setInterval(() => {
+            setResetCooldown((prev) => {
+              if (prev <= 1) {
+                clearInterval(timer);
+                return 0;
+              }
+              return prev - 1;
+            });
+          }, 1000);
+        }
       } else {
         const { error: err } = await signUp(email, password, role, fullName);
         if (err) setError(err.message);
-        else setSuccess('Account created! Please check your email to confirm, then log in.');
+        else
+          setSuccess(
+            'Account created! Please check your email to confirm, then log in.'
+          );
       }
     } finally {
       setSubmitting(false);
@@ -45,6 +70,11 @@ export default function Auth({ onClose }) {
   };
 
   if (loading) return null;
+
+  const selectRole = (r) => {
+    setRole(r);
+    setError('');
+  };
 
   return (
     <div className="fixed inset-0 z-50 bg-ink/80 backdrop-blur-sm flex items-center justify-center p-4">
@@ -56,7 +86,11 @@ export default function Auth({ onClose }) {
         {/* Mode Tabs */}
         <div className="flex gap-2 mb-6">
           <button
-            onClick={() => { setMode('login'); setError(''); setSuccess(''); }}
+            onClick={() => {
+              setMode('login');
+              setError('');
+              setSuccess('');
+            }}
             className={`flex-1 py-2 rounded-xl font-bold text-sm transition-all ${
               mode === 'login' ? 'bg-sea text-white shadow-sm' : 'bg-sand-3 text-ink hover:bg-sand-4'
             }`}
@@ -64,7 +98,11 @@ export default function Auth({ onClose }) {
             Log in
           </button>
           <button
-            onClick={() => { setMode('signup'); setError(''); setSuccess(''); }}
+            onClick={() => {
+              setMode('signup');
+              setError('');
+              setSuccess('');
+            }}
             className={`flex-1 py-2 rounded-xl font-bold text-sm transition-all ${
               mode === 'signup' ? 'bg-sea text-white shadow-sm' : 'bg-sand-3 text-ink hover:bg-sand-4'
             }`}
@@ -74,7 +112,11 @@ export default function Auth({ onClose }) {
         </div>
 
         <h2 className="text-xl sm:text-2xl font-bold text-ink mb-1">
-          {mode === 'login' ? 'Welcome back' : mode === 'signup' ? 'Join Campus Market' : 'Reset Password'}
+          {mode === 'login'
+            ? 'Welcome back'
+            : mode === 'signup'
+              ? 'Join Campus Market'
+              : 'Reset Password'}
         </h2>
         <p className="text-soft text-sm mb-6">
           {mode === 'login'
@@ -103,13 +145,22 @@ export default function Auth({ onClose }) {
                 className="w-full bg-sand-4 border border-sand-2 rounded-xl px-3 py-2 text-ink focus:border-sea focus:outline-none focus:ring-2 focus:ring-sea/20"
               />
             </div>
+            {resetCooldown > 0 && (
+              <p className="text-sm text-coral font-semibold" role="alert">
+                Please wait {resetCooldown} seconds before requesting again.
+              </p>
+            )}
             {error && <p className="text-sm text-red-700 font-semibold" role="alert">{error}</p>}
             <button
               type="submit"
-              disabled={submitting}
-              className="w-full bg-ink hover:bg-sea text-sand-4 hover:text-white py-2.5 rounded-xl font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={submitting || resetCooldown > 0}
+              className={`w-full py-2.5 rounded-xl font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                resetCooldown > 0 || submitting
+                  ? 'bg-sand-3 text-soft'
+                  : 'bg-ink text-sand-4 hover:bg-sea hover:text-white'
+              }`}
             >
-              {submitting ? 'Sending…' : 'Send reset link'}
+              {submitting ? 'Sending…' : resetCooldown > 0 ? `Wait ${resetCooldown}s` : 'Send reset link'}
             </button>
           </form>
         ) : (
@@ -162,28 +213,28 @@ export default function Auth({ onClose }) {
                 <div>
                   <label className="block text-xs font-semibold text-soft mb-1">I am a *</label>
                   <div className="flex gap-2">
-                    <label className="flex-1 border rounded-xl p-2 text-center text-xs font-semibold cursor-pointer text-sm">
-                      <input
-                        type="radio"
-                        name="role"
-                        value="senior"
-                        checked={role === 'senior'}
-                        onChange={() => setRole('senior')}
-                        className="sr-only"
-                      />
+                    <button
+                      type="button"
+                      onClick={() => selectRole('senior')}
+                      className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all border ${
+                        role === 'senior'
+                          ? 'bg-sea text-white border-sea shadow-sm'
+                          : 'bg-sand-3 text-ink border-sand-2 hover:bg-sand-4'
+                      }`}
+                    >
                       Senior
-                    </label>
-                    <label className="flex-1 border rounded-xl p-2 text-center text-xs font-semibold cursor-pointer text-sm">
-                      <input
-                        type="radio"
-                        name="role"
-                        value="junior"
-                        checked={role === 'junior'}
-                        onChange={() => setRole('junior')}
-                        className="sr-only"
-                      />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => selectRole('junior')}
+                      className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all border ${
+                        role === 'junior'
+                          ? 'bg-coral text-white border-coral shadow-sm'
+                          : 'bg-sand-3 text-ink border-sand-2 hover:bg-sand-4'
+                      }`}
+                    >
                       Junior
-                    </label>
+                    </button>
                   </div>
                   <p className="text-[10px] text-soft mt-1">
                     Role is locked after signup (college policy).
@@ -208,7 +259,11 @@ export default function Auth({ onClose }) {
               Don't have an account?{' '}
               <button
                 type="button"
-                onClick={() => { setMode('signup'); setError(''); setSuccess(''); }}
+                onClick={() => {
+                  setMode('signup');
+                  setError('');
+                  setSuccess('');
+                }}
                 className="text-sea font-semibold hover:underline"
               >
                 Create one
@@ -216,7 +271,11 @@ export default function Auth({ onClose }) {
               <br />
               <button
                 type="button"
-                onClick={() => { setMode('forgot'); setError(''); setSuccess(''); }}
+                onClick={() => {
+                  setMode('forgot');
+                  setError('');
+                  setSuccess('');
+                }}
                 className="text-coral font-semibold hover:underline mt-2 block"
               >
                 <Mail className="w-3 h-3 inline mr-1" /> Forgot password?
@@ -227,7 +286,11 @@ export default function Auth({ onClose }) {
               Already have an account?{' '}
               <button
                 type="button"
-                onClick={() => { setMode('login'); setError(''); setSuccess(''); }}
+                onClick={() => {
+                  setMode('login');
+                  setError('');
+                  setSuccess('');
+                }}
                 className="text-sea font-semibold hover:underline"
               >
                 Sign in instead
@@ -238,7 +301,11 @@ export default function Auth({ onClose }) {
               Remember your password?{' '}
               <button
                 type="button"
-                onClick={() => { setMode('login'); setError(''); setSuccess(''); }}
+                onClick={() => {
+                  setMode('login');
+                  setError('');
+                  setSuccess('');
+                }}
                 className="text-sea font-semibold hover:underline"
               >
                 Sign in
