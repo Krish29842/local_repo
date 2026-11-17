@@ -12,20 +12,29 @@ import Auth from './pages/Auth';
 function ProtectedRoute({ children, requireRole }) {
   const { user, profile, loading } = useAuth();
   if (loading) return <div className="min-h-screen flex items-center justify-center p-6 text-soft">Loading…</div>;
-  if (!user) return <Navigate to="/auth" replace />;
+  if (!user) return <Navigate to="/" replace />;
   if (requireRole && profile?.role !== requireRole) return <Navigate to="/" replace />;
   return <>{children}</>;
 }
 
 export default function App() {
+  const [showAuthModal, setShowAuthModal] = useState(false);
+
   return (
     <BrowserRouter>
       <AuthProvider>
-        <Navbar />
+        <Navbar onLogin={() => setShowAuthModal(true)} />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/product/:id" element={<ProductDetail />} />
-          <Route path="/auth" element={<Auth />} />
+          <Route
+            path="/auth"
+            element={
+              <div className="min-h-screen flex items-center justify-center bg-sand-5">
+                <Auth onClose={() => setShowAuthModal(false)} />
+              </div>
+            }
+          />
           <Route
             path="/dashboard"
             element={
@@ -43,6 +52,11 @@ export default function App() {
             }
           />
         </Routes>
+
+        {showAuthModal && (
+          <Auth onClose={() => setShowAuthModal(false)} />
+        )}
+
         <Footer />
       </AuthProvider>
     </BrowserRouter>

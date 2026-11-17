@@ -9,12 +9,14 @@ import NotebookList from '../components/NotebookList';
 import SafetyBanner from '../components/SafetyBanner';
 import Footer from '../components/Footer';
 import ChatModal from '../components/ChatModal';
+
 export default function Home() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [mode, setMode] = useState('all');
   const [category, setCategory] = useState('');
   const [semester, setSemester] = useState('');
+  const [year, setYear] = useState('');
   const [subject, setSubject] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('new');
@@ -25,7 +27,7 @@ export default function Home() {
     supabase
       .from('products')
       .select(
-        'id, title, author, category, semester, subject, sale_price, rent_price, condition, image_url, owner_id, profiles(full_name), status',
+        'id, title, author, category, semester, subject, sale_price, rent_price, condition, image_url, owner_id, owner_name, status, created_at',
       )
       .eq('status', 'available')
       .order('created_at', { ascending: false })
@@ -69,11 +71,24 @@ export default function Home() {
           (mode === 'buy' ? p.sale_price != null : p.rent_price != null);
         const matchesCategory = !category || p.category === category;
         const matchesSemester = !semester || String(p.semester) === semester;
+        const matchesYear = !year || {
+          '1': ['1', '2'],
+          '2': ['3', '4'],
+          '3': ['5', '6'],
+          '4': ['7', '8'],
+        }[year].includes(String(p.semester));
         const matchesSubject = !subject || p.subject === subject;
         const matchesQuery =
           !q ||
           [p.title, p.author, p.subject].some((v) => v && v.toLowerCase().includes(q));
-        return matchesMode && matchesCategory && matchesSemester && matchesSubject && matchesQuery;
+        return (
+          matchesMode &&
+          matchesCategory &&
+          matchesSemester &&
+          matchesYear &&
+          matchesSubject &&
+          matchesQuery
+        );
       })
       .sort((a, b) => {
         if (sortBy === 'low') {
@@ -88,7 +103,7 @@ export default function Home() {
         }
         return new Date(b.created_at) - new Date(a.created_at);
       });
-  }, [products, mode, category, semester, subject, searchQuery, sortBy]);
+  }, [products, mode, category, semester, year, subject, searchQuery, sortBy]);
 
   if (loading) {
     return (
@@ -116,6 +131,8 @@ export default function Home() {
             setCategory={setCategory}
             semester={semester}
             setSemester={setSemester}
+            year={year}
+            setYear={setYear}
             subject={subject}
             setSubject={setSubject}
             subjects={subjectOptions}
@@ -131,23 +148,27 @@ export default function Home() {
             onContact={handleContact}
           />
 
-          <div id="sell" className="mt-14 p-6 sm:p-9 bg-sand-3 rounded-3xl border border-sand-2 shadow-paper relative">
-            <div className="max-w-3xl">
-              <div className="flex items-center gap-2 mb-1">
+          <div id="sell" className="mt-16 p-8 sm:p-12 bg-gradient-to-r from-sea to-sea-hover rounded-3xl border border-sea/30 shadow-sea/20 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none" aria-hidden="true">
+              <div className="w-64 h-64 rounded-full bg-white/20 blur-[100px] -top-24 -right-24" />
+              <div className="w-64 h-64 rounded-full bg-coral/20 blur-[100px] -bottom-24 -left-24" />
+            </div>
+            <div className="relative z-10 max-w-3xl mx-auto">
+              <div className="flex items-center gap-2 mb-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-coral animate-ping" />
                 <span className="text-xs font-bold uppercase tracking-wider text-coral">
                   Campus Bulletin
                 </span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-ink tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
                 Finished with it? Add it to the page.
               </h2>
-              <p className="font-hand text-sea text-lg sm:text-xl mt-1 mb-6">
+              <p className="font-hand text-sea-light text-lg sm:text-xl mt-2 mb-8">
                 Sell it, rent it for a semester — juniors will message you.
               </p>
               <NavLink
                 to="/sell"
-                className="inline-flex items-center gap-2 bg-ink hover:bg-sea text-sand-4 hover:text-white px-7 py-3 rounded-full font-bold text-base transition-all shadow-paper active:scale-95"
+                className="inline-flex items-center gap-2 bg-white text-ink hover:bg-coral hover:text-white px-8 py-3 rounded-full font-bold text-base transition-all shadow-lg active:scale-95"
               >
                 📝 Create listing
               </NavLink>

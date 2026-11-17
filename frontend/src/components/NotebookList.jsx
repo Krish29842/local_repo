@@ -1,29 +1,37 @@
 import React from 'react';
 import { Bookmark, MessageSquare, Key } from './Icons';
 
+const placeholderByCategory = {
+  book: '📖',
+  accessory: '🎒',
+};
+
 export default function NotebookList({ products, savedSet, onToggleSave, onContact }) {
   if (products.length === 0) {
     return (
-      <div className="py-12 px-6 text-center bg-sand-4/60 border border-dashed border-sand-2 rounded-2xl">
-        <p className="font-hand text-sea text-xl sm:text-2xl">
+      <div className="py-20 px-6 text-center bg-sand-4/40 border border-dashed border-sand-2 rounded-3xl">
+        <div className="w-16 h-16 rounded-full bg-sea/10 text-sea flex items-center justify-center mx-auto mb-4 text-3xl">
+          📚
+        </div>
+        <p className="font-hand text-sea text-xl sm:text-2xl font-semibold mb-2">
           Nothing here yet matching your filters.
         </p>
-        <p className="text-soft text-sm mt-1">
-          Add what you need in the form below and seniors will reach out!
+        <p className="text-soft text-sm mt-1 max-w-xs mx-auto">
+          Try widening your semester or subject filters — or be the first to list something!
         </p>
       </div>
     );
   }
 
   return (
-    <div className="relative pl-12 sm:pl-18 border-t-2 border-sand-2">
+    <div className="relative pt-4">
       {/* Signature Vertical Coral Notebook Margin Line */}
       <div
-        className="absolute left-9 sm:left-14 top-0 bottom-0 w-[2px] bg-coral/80"
+        className="absolute left-[60px] sm:left-[80px] top-0 bottom-0 w-[2px] bg-coral/40"
         aria-hidden="true"
       />
 
-      <div className="divide-y divide-sand-2">
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {products.map((p) => {
           const isSaved = savedSet.has(p.id);
           const isBook = p.category === 'book';
@@ -31,99 +39,106 @@ export default function NotebookList({ products, savedSet, onToggleSave, onConta
           return (
             <article
               key={p.id}
-              className="relative py-5 pr-2 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4 items-start hover:bg-gradient-to-r hover:from-transparent hover:to-sand-4/50 rounded-r-xl transition-colors group"
+              className="group relative flex flex-col h-full bg-white rounded-3xl border border-sand-2 shadow-sm hover:shadow-paperLift transition-all duration-300 hover:-translate-y-1 cursor-pointer"
             >
-              {/* Handwritten Left-Margin Tag */}
-              <div className="absolute left-[-44px] sm:left-[-54px] top-5 w-10 text-right font-hand font-bold text-base sm:text-lg text-coral uppercase tracking-wide">
-                {isBook ? 'book' : 'gear'}
+              {/* Category tag */}
+              <div className="absolute top-4 left-4 z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white border border-sand-2 shadow-sm">
+                <span className={`w-2 h-2 rounded-full ${isBook ? 'bg-sea' : 'bg-coral'}`} />
+                <span className="text-[10px] font-bold uppercase tracking-wider text-soft">
+                  {isBook ? 'Book' : 'Gear'}
+                </span>
               </div>
 
-              {/* Center Content */}
-              <div className="space-y-1.5">
-                <h3 className="font-bold text-lg sm:text-xl text-ink leading-snug group-hover:text-sea transition-colors">
-                  {p.title}
-                </h3>
-                {p.author && <p className="text-soft text-sm font-medium">by {p.author}</p>}
+              {/* Saved badge */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleSave(p.id);
+                }}
+                className={`absolute top-4 right-4 z-10 p-2 rounded-full transition-all duration-200 ${
+                  isSaved
+                    ? 'bg-coral text-white shadow-md'
+                    : 'bg-white text-soft border border-sand-2 hover:bg-sea hover:text-white hover:border-sea'
+                }`}
+                aria-label={isSaved ? 'Unsave' : 'Save'}
+              >
+                <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} />
+              </button>
+
+              {/* Image area */}
+              <div className="aspect-video rounded-t-3xl overflow-hidden bg-sand-3 relative">
+                {p.image_url ? (
+                  <img
+                    src={p.image_url}
+                    alt={p.title}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center text-soft">
+                    <span className="text-5xl mb-2">{placeholderByCategory[p.category] || '📦'}</span>
+                    <p className="text-xs font-medium text-ink/60">No image</p>
+                  </div>
+                )}
+                {/* Semester pill on image */}
+                <div className="absolute bottom-3 left-3 bg-ink/90 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-lg backdrop-blur">
+                  Sem {p.semester}
+                </div>
+              </div>
+
+              <div className="p-4 flex-1 flex flex-col">
+                <div className="flex items-start gap-2 mb-1">
+                  <h3 className="font-bold text-lg text-ink leading-snug group-hover:text-sea transition-colors line-clamp-2">
+                    {p.title}
+                  </h3>
+                </div>
+                {p.author && (
+                  <p className="text-xs text-soft mb-3 font-medium">by {p.author}</p>
+                )}
 
                 {/* Facts row */}
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-soft pt-1">
-                  <span className="bg-sand-4 border border-sand-2 px-2.5 py-0.5 rounded-full text-ink font-semibold">
-                    <strong className="text-ink">Sem {p.semester}</strong> • {p.subject}
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mb-4">
+                  <span className="px-2.5 py-0.5 rounded-full bg-sand-3 text-ink text-xs font-semibold border border-sand-2">
+                    Sem {p.semester} • {p.subject}
                   </span>
-                  <span className="bg-sand-3 px-2 py-0.5 rounded-full text-ink font-medium">
+                  <span className="px-2.5 py-0.5 rounded-full bg-sea/10 text-sea text-xs font-semibold border border-sea/20">
                     {p.condition}
                   </span>
-                  <span className="text-soft">
-                    Listed by <span className="text-ink font-semibold">{p.owner_name}</span>
-                  </span>
                 </div>
 
-                {/* Senior Handwritten Scribble Tip */}
-                {p.note && (
-                  <p className="font-hand text-sea text-base sm:text-lg pt-1 leading-snug">
-                    ✎ {p.note}
-                  </p>
-                )}
-              </div>
-
-              {/* Right Column: Pricing & Actions */}
-              <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-center gap-2 pt-2 md:pt-0 shrink-0">
-                <div className="text-left md:text-right">
-                  {p.sale_price != null && (
-                    <div className="font-extrabold text-2xl sm:text-3xl text-ink tracking-tight">
-                      ₹{p.sale_price}
-                      <span className="text-[11px] font-semibold text-soft block -mt-0.5">
-                        one-time purchase
+                <div className="mt-auto pt-3 border-t border-sand-2">
+                  <div className="flex items-baseline gap-2 mb-3">
+                    {p.sale_price != null && (
+                      <span className="text-xl font-extrabold text-ink">
+                        ₹{p.sale_price}
                       </span>
-                    </div>
-                  )}
-                  {p.rent_price != null && (
-                    <div
-                      className={`font-extrabold text-ink tracking-tight ${
-                        p.sale_price != null ? 'text-lg mt-1' : 'text-2xl sm:text-3xl'
-                      }`}
-                    >
-                      ₹{p.rent_price}
-                      <span className="text-[11px] font-semibold text-soft block -mt-0.5">
-                        per month
+                    )}
+                    {p.rent_price != null && (
+                      <span className="text-base font-bold text-sea">
+                        ₹{p.rent_price}/mo
                       </span>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
 
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => onToggleSave(p.id)}
-                    className={`p-2 rounded-lg border transition-colors ${
-                      isSaved
-                        ? 'border-coral bg-coral/10 text-coral font-bold'
-                        : 'border-sand-2 text-soft hover:text-coral hover:bg-sand-4'
-                    }`}
-                    title={isSaved ? 'Saved in wishlist' : 'Save for later'}
-                    aria-label="Save for later"
-                  >
-                    <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} />
-                  </button>
-
-                  {/* D002: Buy only if sale_price exists, Rent only if rent_price exists */}
-                  {p.sale_price != null && (
-                    <button
-                      onClick={() => onContact(p, 'buy')}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full font-bold text-xs sm:text-sm shadow-xs transition-all active:scale-95 bg-sea text-white hover:bg-sea-hover"
-                    >
-                      <MessageSquare className="w-4 h-4" />
-                      <span>Buy</span>
-                    </button>
-                  )}
-                  {p.rent_price != null && (
-                    <button
-                      onClick={() => onContact(p, 'rent')}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full font-bold text-xs sm:text-sm shadow-xs transition-all active:scale-95 bg-coral text-white hover:bg-coral-hover"
-                    >
-                      <Key className="w-4 h-4" />
-                      <span>Rent</span>
-                    </button>
-                  )}
+                  <div className="grid grid-cols-2 gap-2">
+                    {p.sale_price != null && (
+                      <button
+                        onClick={() => onContact(p, 'buy')}
+                        className="flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-ink text-white text-xs font-bold hover:bg-sea-hover transition-all active:scale-95 shadow-sm disabled:opacity-50"
+                      >
+                        <MessageSquare className="w-3 h-3" />
+                        Buy
+                      </button>
+                    )}
+                    {p.rent_price != null && (
+                      <button
+                        onClick={() => onContact(p, 'rent')}
+                        className="flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-coral text-white text-xs font-bold hover:bg-coral-hover transition-all active:scale-95 shadow-sm disabled:opacity-50"
+                      >
+                        <Key className="w-3 h-3" />
+                        Rent
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             </article>

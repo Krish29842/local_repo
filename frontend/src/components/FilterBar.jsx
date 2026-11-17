@@ -8,6 +8,23 @@ const CATEGORIES = [
 
 const SEMESTERS = [1, 2, 3, 4, 5, 6, 7, 8];
 
+const YEAR_OPTIONS = [
+  { id: '', label: 'Any Year' },
+  { id: '1', label: '1st Year' },
+  { id: '2', label: '2nd Year' },
+  { id: '3', label: '3rd Year' },
+  { id: '4', label: 'Final Year' },
+];
+
+function semesterToYear(semester) {
+  const s = Number(semester);
+  if (!s || s < 1) return '';
+  if (s <= 2) return '1';
+  if (s <= 4) return '2';
+  if (s <= 6) return '3';
+  return '4';
+}
+
 export default function FilterBar({
   mode,
   setMode,
@@ -21,6 +38,8 @@ export default function FilterBar({
   sortBy,
   setSortBy,
   productCount,
+  year,
+  setYear,
 }) {
   return (
     <div className="border-b border-sand-2 pb-4 mb-6">
@@ -42,6 +61,35 @@ export default function FilterBar({
               aria-pressed={isActive}
             >
               {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Year Filter Pills */}
+      <div className="flex flex-wrap gap-2 py-2">
+        {YEAR_OPTIONS.map((y) => {
+          const isSelected = year === y.id;
+          return (
+            <button
+              key={y.id}
+              onClick={() => {
+                setYear(y.id);
+                // Auto-select a default semester for the year
+                if (y.id === '1') setSemester('1');
+                if (y.id === '2') setSemester('3');
+                if (y.id === '3') setSemester('5');
+                if (y.id === '4') setSemester('7');
+                if (y.id === '') setSemester('');
+              }}
+              className={`px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+                isSelected
+                  ? 'bg-sea text-white shadow-sm'
+                  : 'bg-sand-3 text-ink hover:bg-sand-2'
+              }`}
+              aria-pressed={isSelected}
+            >
+              {y.label}
             </button>
           );
         })}
@@ -82,8 +130,11 @@ export default function FilterBar({
             <span>Semester</span>
             <select
               value={semester}
-              onChange={(e) => setSemester(e.target.value)}
-              className="bg-sand-4 border border-sand-2 text-ink rounded-lg px-2.5 py-1 text-xs sm:text-sm focus:ring-1 focus:ring-sea focus:outline-none"
+              onChange={(e) => {
+                setSemester(e.target.value);
+                setYear(semesterToYear(e.target.value));
+              }}
+              className="bg-sand-4 border border-sand-2 text-ink rounded-lg px-2.5 py-1 text-xs sm:text-sm focus:ring-1 focus:ring-sea focus:outline-none cursor-pointer"
             >
               <option value="">Any</option>
               {SEMESTERS.map((s) => (
@@ -99,7 +150,7 @@ export default function FilterBar({
             <select
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              className="bg-sand-4 border border-sand-2 text-ink rounded-lg px-2.5 py-1 text-xs sm:text-sm focus:ring-1 focus:ring-sea focus:outline-none"
+              className="bg-sand-4 border border-sand-2 text-ink rounded-lg px-2.5 py-1 text-xs sm:text-sm focus:ring-1 focus:ring-sea focus:outline-none cursor-pointer"
             >
               <option value="">Any</option>
               {subjects.map((s) => (
@@ -115,7 +166,7 @@ export default function FilterBar({
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="bg-sand-4 border border-sand-2 text-ink rounded-lg px-2.5 py-1 text-xs sm:text-sm focus:ring-1 focus:ring-sea focus:outline-none"
+              className="bg-sand-4 border border-sand-2 text-ink rounded-lg px-2.5 py-1 text-xs sm:text-sm focus:ring-1 focus:ring-sea focus:outline-none cursor-pointer"
             >
               <option value="new">Newest</option>
               <option value="low">Cheapest first</option>
