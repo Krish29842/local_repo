@@ -31,14 +31,24 @@ export function AuthProvider({ children }) {
   }, []);
 
   const signUp = async (email, password, role, fullName) => {
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: { role, full_name: fullName },
       },
     });
-    return { error };
+    // If email confirmations are OFF, data.session exists → auto sign in
+    if (!error && data.session) {
+      setUser(data.session.user);
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('id, role, full_name, college')
+        .eq('id', data.session.user.id)
+        .single();
+      setProfile(prof);
+    }
+    return { error, session: data.session };
   };
 
   const signIn = async (email, password) => {

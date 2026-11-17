@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useAuth } from '../lib/useAuth';
-import { X, Mail } from '../components/Icons';
+import { X } from '../components/Icons';
 
-export default function Auth({ onClose }) {
-  const { signUp, signIn, resetPassword, loading } = useAuth();
+export default function Auth({ onClose, onSuccess }) {
+  const { signUp, signIn, resetPassword, loading, user } = useAuth();
   const [mode, setMode] = useState('login'); // 'login' | 'signup' | 'forgot'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -13,7 +13,7 @@ export default function Auth({ onClose }) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [resetCooldown, setResetCooldown] = useState(0); // seconds remaining
+  const [resetCooldown, setResetCooldown] = useState(0);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -24,22 +24,16 @@ export default function Auth({ onClose }) {
       if (mode === 'login') {
         const { error: err } = await signIn(email, password);
         if (err) {
-          if (
-            err.message?.includes('not confirmed') ||
-            err.message?.includes('Email not confirmed')
-          ) {
-            setError(
-              'Please confirm your email first. Check your inbox for the confirmation link.'
-            );
-          } else {
-            setError(err.message);
-          }
+          setError(err.message || 'Login failed. Please try again.');
+        } else if (onSuccess) {
+          onSuccess();
+          onClose();
         }
       } else if (mode === 'forgot') {
         const { error: err } = await resetPassword(email);
         if (err) {
           if (err.message?.includes('45 seconds') || err.message?.includes('only request')) {
-            setError('Please wait 45 seconds before requesting another reset link.');
+            setError('Please wait 45 seconds before requesting again.');
           } else {
             setError(err.message);
           }
@@ -57,12 +51,21 @@ export default function Auth({ onClose }) {
           }, 1000);
         }
       } else {
-        const { error: err } = await signUp(email, password, role, fullName);
-        if (err) setError(err.message);
-        else
-          setSuccess(
-            'Account created! Please check your email to confirm, then log in.'
-          );
+        const { error: err, session } = await signUp(email, password, role, fullName);
+        if (err) {
+          setError(err.message || 'Signup failed. Please try again.');
+        } else if (session && user) {
+          // Auto signed in (email confirmations OFF)
+          setSuccess('Account created & logged in!');
+          setTimeout(() => {
+            onSuccess();
+            onClose();
+          }, 1200);
+        } else {
+          // Email confirmations may still be ON
+          setSuccess('Account created! Please log in.');
+          setMode('login');
+        }
       }
     } finally {
       setSubmitting(false);
@@ -86,11 +89,7 @@ export default function Auth({ onClose }) {
         {/* Mode Tabs */}
         <div className="flex gap-2 mb-6">
           <button
-            onClick={() => {
-              setMode('login');
-              setError('');
-              setSuccess('');
-            }}
+            onClick={() => { setMode('login'); setError(''); setSuccess(''); }}
             className={`flex-1 py-2 rounded-xl font-bold text-sm transition-all ${
               mode === 'login' ? 'bg-sea text-white shadow-sm' : 'bg-sand-3 text-ink hover:bg-sand-4'
             }`}
@@ -98,11 +97,7 @@ export default function Auth({ onClose }) {
             Log in
           </button>
           <button
-            onClick={() => {
-              setMode('signup');
-              setError('');
-              setSuccess('');
-            }}
+            onClick={() => { setMode('signup'); setError(''); setSuccess(''); }}
             className={`flex-1 py-2 rounded-xl font-bold text-sm transition-all ${
               mode === 'signup' ? 'bg-sea text-white shadow-sm' : 'bg-sand-3 text-ink hover:bg-sand-4'
             }`}
@@ -259,11 +254,7 @@ export default function Auth({ onClose }) {
               Don't have an account?{' '}
               <button
                 type="button"
-                onClick={() => {
-                  setMode('signup');
-                  setError('');
-                  setSuccess('');
-                }}
+                onClick={() => { setMode('signup'); setError(''); setSuccess(''); }}
                 className="text-sea font-semibold hover:underline"
               >
                 Create one
@@ -271,14 +262,10 @@ export default function Auth({ onClose }) {
               <br />
               <button
                 type="button"
-                onClick={() => {
-                  setMode('forgot');
-                  setError('');
-                  setSuccess('');
-                }}
+                onClick={() => { setMode('forgot'); setError(''); setSuccess(''); }}
                 className="text-coral font-semibold hover:underline mt-2 block"
               >
-                <Mail className="w-3 h-3 inline mr-1" /> Forgot password?
+                Forgot password?
               </button>
             </>
           ) : mode === 'signup' ? (
@@ -286,11 +273,7 @@ export default function Auth({ onClose }) {
               Already have an account?{' '}
               <button
                 type="button"
-                onClick={() => {
-                  setMode('login');
-                  setError('');
-                  setSuccess('');
-                }}
+                onClick={() => { setMode('login'); setError(''); setSuccess(''); }}
                 className="text-sea font-semibold hover:underline"
               >
                 Sign in instead
@@ -301,11 +284,7 @@ export default function Auth({ onClose }) {
               Remember your password?{' '}
               <button
                 type="button"
-                onClick={() => {
-                  setMode('login');
-                  setError('');
-                  setSuccess('');
-                }}
+                onClick={() => { setMode('login'); setError(''); setSuccess(''); }}
                 className="text-sea font-semibold hover:underline"
               >
                 Sign in

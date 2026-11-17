@@ -31,7 +31,7 @@ export default function App() {
             path="/auth"
             element={
               <div className="min-h-screen flex items-center justify-center bg-sand-5">
-                <Auth onClose={() => setShowAuthModal(false)} />
+                <Auth onClose={() => setShowAuthModal(false)} onSuccess={() => setShowAuthModal(false)} />
               </div>
             }
           />
@@ -54,7 +54,10 @@ export default function App() {
         </Routes>
 
         {showAuthModal && (
-          <Auth onClose={() => setShowAuthModal(false)} />
+          <Auth
+            onClose={() => setShowAuthModal(false)}
+            onSuccess={() => setShowAuthModal(false)}
+          />
         )}
 
         <Footer />
