@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import { DUMMY_PRODUCTS } from '../lib/dummyData';
 import { NavLink } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Hero from '../components/Hero';
@@ -31,9 +32,11 @@ export default function Home() {
       .then(({ data, error }) => {
         if (error) {
           console.error(error);
-          setProducts([]);
+          setProducts(DUMMY_PRODUCTS);
+        } else if (!data || data.length === 0) {
+          setProducts(DUMMY_PRODUCTS);
         } else {
-          setProducts(data || []);
+          setProducts(data);
         }
         setLoading(false);
       });
