@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { DUMMY_PRODUCTS } from '../lib/dummyData';
 import { NavLink } from 'react-router-dom';
-import Navbar from '../components/Navbar';
 import Hero from '../components/Hero';
 import FilterBar from '../components/FilterBar';
 import NotebookList from '../components/NotebookList';
@@ -113,8 +112,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col bg-sand-5 text-ink">
-      <Navbar savedCount={savedSet.size} />
-
       <main className="flex-1">
         <Hero
           searchQuery={searchQuery}
